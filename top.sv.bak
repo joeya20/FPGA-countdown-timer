@@ -1,0 +1,50 @@
+module top (
+	input 			MAX10_CLK1_50,
+	input	[9:0]	SW,
+	input	[1:0]	KEY,
+	output 	[7:0]	HEX0,
+	output 	[7:0]	HEX1,
+	output 	[7:0]	HEX2
+	output	[9:0]	LEDR
+);
+
+wire PB0_read, PB1_read, finish_flag;
+wire [7:0] tmr;
+wire [11:0] tmr_bcd;
+wire rst_n = ~SW[0];
+
+countdown_timer timer(
+	.*,
+	.clk(MAX10_CLK1_50),
+	.PB0(KEY[0]),
+	.PB1(KEY[1])
+);
+
+bin_to_bcd bcd_encoder(
+	.bin(tmr),
+	.out(tmr_bcd)
+);
+
+LED_blinker blinker(
+	.*,
+	.clk(MAX10_CLK1_50),
+	.enable(finish_flag),
+	.led(LEDR)
+);
+
+sev_seg_decoder digit_0(
+	.bcd(tmr_bcd[3:0]),
+	.sev_seg(HEX0)
+);
+
+sev_seg_decoder digit_1(
+	.bcd(tmr_bcd[7:4]),
+	.sev_seg(HEX1)
+);
+
+sev_seg_decoder digit_2(
+	.bcd(tmr_bcd[11:8]),
+	.sev_seg(HEX2)
+);
+
+endmodule

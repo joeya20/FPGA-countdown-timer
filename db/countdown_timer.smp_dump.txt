@@ -1,0 +1,8 @@
+
+State Machine - |top|countdown_timer:timer|current_state
+Name current_state.DECREMENT current_state.ACTIVE current_state.INCREMENT current_state.IDLE current_state.FINISH 
+current_state.IDLE 0 0 0 0 0 
+current_state.INCREMENT 0 0 1 1 0 
+current_state.ACTIVE 0 1 0 1 0 
+current_state.DECREMENT 1 0 0 1 0 
+current_state.FINISH 0 0 0 1 1 

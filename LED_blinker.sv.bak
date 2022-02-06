@@ -1,0 +1,28 @@
+
+module LED_blinker #(parameter MAX_COUNT_1Hz = 25_000_000) (
+	input 	i_clk,
+	input 	i_enable,
+	input 	i_select0,
+	input 	i_select1,
+	output 	o_led
+);
+
+//counter
+reg [31:0] r_count = 0;
+
+//LED toggle signal
+reg r_toggle = 1'b0;	
+
+always @ (posedge i_clk) begin		
+	//increment counter and toggle LED and roll over if max count is reached
+	if(r_count < MAX_COUNT_1Hz-1) begin
+		r_count <= r_count + 1;
+	end else begin
+		r_toggle <= !r_toggle;
+		r_count <= 0;
+	end
+end
+
+assign o_led = r_toggle & i_enable;
+
+endmodule

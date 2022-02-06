@@ -1,0 +1,112 @@
+module countdown_timer #(CLK_FREQ = 50_000_000)
+    (
+    input           clk,
+    input           rst_n,  //active low reset
+    input           PB0,
+    input           PB1,
+    output          PB0_read,   //gets asserted when PB0 is read high to drive PB0 low
+    output          PB1_read,   //gets asserted when PB1 is read high to drive PB1 low
+    output  [7:0]   tmr,
+    output          finish_flag
+);
+
+//state encoding
+enum logic [3:0] {
+    IDLE,
+    INCREMENT,
+    ACTIVE,
+    DECREMENT,
+    FINISH
+} current_state, next_state;
+
+// main countdown timer in min
+logic [7:0] main_tmr;
+
+//counter
+logic [31:0] counter_sec;
+
+logic decrement_flag;
+
+always_ff @( posedge clk or negedge rst_n ) begin
+    if (!rst_n) begin
+        current_state <= IDLE;
+    end else begin
+        current_state <= next_state;
+    end
+end
+
+// next state logic
+always_comb begin : next_state_logic
+    PB0_read = 0;
+    PB1_read = 0;
+    next_state = current_state;
+    unique case (current_state)
+        IDLE : begin
+            if (PB0) begin
+                next_state = INCREMENT;
+                PB0_read = 1;
+            end else if (PB1) begin
+                next_state = ACTIVE;
+                PB1_read = 1;
+            end else begin
+                next_state = IDLE;
+            end
+        end
+        INCREMENT : next_state = IDLE;
+        ACTIVE : begin
+            if (PB1) begin
+                next_state = IDLE;
+                PB1_read = 1;
+            end else if (tmr == 0) begin
+                next_state = FINISH;
+            end else if (decrement_flag) begin
+                next_state = DECREMENT;
+            end else begin
+                next_state = ACTIVE;
+            end
+        end
+        DECREMENT : next_state = ACTIVE;
+        FINISH : begin
+            if (PB0) begin
+                next_state = INCREMENT;
+                PB0_read = 1;
+            end else if (PB1) begin
+                next_state = IDLE;
+                PB1_read = 1;
+            end else begin
+                next_state = FINISH;
+            end
+        end
+    endcase
+end : next_state_logic
+
+// timer/output logic
+always_ff @( posedge clk ) begin : timer_logic
+    unique case (current_state)
+        IDLE : begin
+            finish_flag <= 0;
+            counter_sec <= 0;
+        end
+        INCREMENT : begin
+            finish_flag <= 0;
+            tmr <= tmr + 1;
+        end
+        ACTIVE : begin
+            if(counter_sec == ((CLK_FREQ*60)-2)) begin  //minus 2 instead of 1 because 1 clk cycle is need to go DECREMENT state
+                decrement_flag <= 1;
+                counter_sec <= 1;   //set to 1 because it will take 1 clk cycle to come back to active after decrement
+            end else begin
+                counter_sec <= counter_sec + 1;
+            end
+        end
+        DECREMENT : begin
+            tmr <= tmr - 1;
+            decrement_flag <= 0;
+        end
+        FINISH : begin
+            finish_flag <= 1;
+        end
+    endcase
+end
+
+endmodule
