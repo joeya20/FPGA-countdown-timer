@@ -33,7 +33,7 @@ always_comb begin
 	for(bin_index = 0; bin_index < BIN_WIDTH; bin_index = bin_index + 1) begin
 	
 		//shift one bit over
-		bcd = {bcd[11:0], bin[BIN_WIDTH-bin_index-1+:1]};
+		bcd = {bcd[0+:((DEC_DEGITS*4)-1)], bin[BIN_WIDTH-bin_index-1+:1]};
 		
 		//loop to check each if decimal digit in BCD signal is greater than 4; Don't check after last shift
 		if(bin_index < BIN_WIDTH-1) begin
