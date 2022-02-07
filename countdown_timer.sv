@@ -31,7 +31,7 @@ logic decrement_flag;
 
 always_ff @( posedge clk or negedge rst_n ) begin
     if (!rst_n) begin
-        current_state <= IDLE;
+        current_state <= IDLE;  //go to idle after reset
     end else begin
         current_state <= next_state;
     end
@@ -39,22 +39,23 @@ end
 
 // next state logic
 always_comb begin : next_state_logic
-    PB0_read = 0;
+    //default assignments
+    PB0_read = 0;  
     PB1_read = 0;
     next_state = current_state;
     unique case (current_state)
         IDLE : begin
-            if (PB0_flag) begin
+            if (PB0_flag) begin //increment if PB0 is pushed and deassert PB0_flag
                 next_state = INCREMENT;
                 PB0_read = 1;
-            end else if (PB1_flag) begin
+            end else if (PB1_flag) begin    //start countdown if PB1 is pushed and deassert PB1_flag
                 next_state = ACTIVE;
                 PB1_read = 1;
-            end else begin
+            end else begin  //if no input, stay in idle
                 next_state = IDLE;
             end
         end
-        INCREMENT : next_state = IDLE;
+        INCREMENT : next_state = IDLE;  //always go back to idle after incrementing
         ACTIVE : begin
             if (PB1_flag) begin
                 next_state = IDLE;
